@@ -1,5 +1,5 @@
 /*
- * Marvell 88SE64xx/88SE94xx const head file
+ * Marvell 88SE64xx/88SE94xx/88SE14xx const head file
  *
  * Copyright 2007 Red Hat, Inc.
  * Copyright 2008 Marvell. <kewei@marvell.com>
@@ -39,7 +39,11 @@ enum chip_flavors {
 	chip_9485,
 	chip_1300,
 	chip_1320,
-	chip_1475
+	chip_1475,
+	chip_1480,
+	chip_1485,
+	chip_1495,
+	chip_1496
 };
 
 /* driver compile-time configuration */
@@ -214,6 +218,7 @@ enum hw_register_bits {
 	MCH_BIST		= (1U << 4),	/* BIST activate (STP/SATA) */
 	MCH_PMP_MASK		= 0xf,		/* PMP from cmd FIS (STP/SATA)*/
 
+// adam: see 94xx SATA port configuration R20100h
 	CCTL_RST		= (1U << 5),	/* port logic reset */
 
 						/* 0(LSB first), 1(MSB first) */
@@ -302,6 +307,7 @@ enum hw_register_bits {
 };
 
 /* SAS/SATA configuration port registers, aka phy registers */
+// adam: for 1475, this does not match, see table 14-23, or section 14.1.7.3
 enum sas_sata_config_port_regs {
 	PHYR_IDENTIFY		= 0x00,	/* info for IDENTIFY frame */
 	PHYR_ADDR_LO		= 0x04,	/* my SAS address (low) */
@@ -337,6 +343,7 @@ enum sas_sata_config_port_regs {
 	CONFIG_ATT_ID_FRAME6   = 0x134, /* attached ID frame register 6 */
 };
 
+// adam: for 1475, this is different, see section 14.1.7.2
 enum sas_cmd_port_registers {
 	CMD_CMRST_OOB_DET	= 0x100, /* COMRESET OOB detect register */
 	CMD_CMWK_OOB_DET	= 0x104, /* COMWAKE OOB detect register */

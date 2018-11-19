@@ -337,7 +337,7 @@ printk(KERN_INFO "MINEDBG: %s:%d bar %d, bar_ex %d\n", __FILE__, __LINE__, bar, 
 printk(KERN_INFO "MINEDBG: %s:%d\n", __FILE__, __LINE__);
 	res_start = pci_resource_start(pdev, bar);
 	res_len = pci_resource_len(pdev, bar);
-printk(KERN_INFO "MINEDBG: %s:%d res_start %lu, len %lu\n", __FILE__, __LINE__, res_start, res_len);
+printk(KERN_INFO "MINEDBG: %s:%d res_start 0x%X, len 0x%X\n", __FILE__, __LINE__, res_start, res_len);
 	if (!res_start || !res_len) {
 		iounmap(mvi->regs_ex);
 		mvi->regs_ex = NULL;
@@ -348,7 +348,7 @@ printk(KERN_INFO "MINEDBG: %s:%d\n", __FILE__, __LINE__);
 	res_flag = pci_resource_flags(pdev, bar);
 	mvi->regs = ioremap(res_start, res_len);
 
-printk(KERN_INFO "MINEDBG: %s:%d res_flag %lu, regs %p\n", __FILE__, __LINE__, res_flag, mvi->regs);
+printk(KERN_INFO "MINEDBG: %s:%d res_flag 0x%X, regs 0x%X\n", __FILE__, __LINE__, res_flag, mvi->regs);
 	if (!mvi->regs) {
 printk(KERN_INFO "MINEDBG: %s:%d\n", __FILE__, __LINE__);
 		if (mvi->regs_ex && (res_flag_ex & IORESOURCE_MEM))
@@ -549,25 +549,20 @@ static int mvs_pci_init(struct pci_dev *pdev, const struct pci_device_id *ent)
 	dev_printk(KERN_INFO, &pdev->dev,
 		"mvsas: driver version %s\n", DRV_VERSION);
 
-printk(KERN_INFO "MINEDBG: %s:%d\n", __FILE__, __LINE__);
 	rc = pci_enable_device(pdev);
 	if (rc)
 		goto err_out_enable;
 
-printk(KERN_INFO "MINEDBG: %s:%d\n", __FILE__, __LINE__);
 	pci_set_master(pdev);
 
-printk(KERN_INFO "MINEDBG: %s:%d\n", __FILE__, __LINE__);
 	rc = pci_request_regions(pdev, DRV_NAME);
 	if (rc)
 		goto err_out_disable;
 
-printk(KERN_INFO "MINEDBG: %s:%d\n", __FILE__, __LINE__);
 	rc = pci_go_64(pdev);
 	if (rc)
 		goto err_out_regions;
 
-printk(KERN_INFO "MINEDBG: %s:%d\n", __FILE__, __LINE__);
 	shost = scsi_host_alloc(&mvs_sht, sizeof(void *));
 	if (!shost) {
 		rc = -ENOMEM;
@@ -745,6 +740,10 @@ static struct pci_device_id mvs_pci_table[] = {
 	},
 	{ PCI_VDEVICE(MARVELL_EXT, 0x9485), chip_9485 }, /* Marvell 9480/9485 (any vendor/model) */
 	{ PCI_VDEVICE(MARVELL_EXT, 0x1475), chip_1475 }, /* Marvell 1475 (any vendor/model) */
+	{ PCI_VDEVICE(MARVELL_EXT, 0x1480), chip_1475 }, /* Marvell 1475 (any vendor/model) */
+	{ PCI_VDEVICE(MARVELL_EXT, 0x1485), chip_1475 }, /* Marvell 1475 (any vendor/model) */
+	{ PCI_VDEVICE(MARVELL_EXT, 0x1495), chip_1475 }, /* Marvell 1475 (any vendor/model) */
+	{ PCI_VDEVICE(MARVELL_EXT, 0x1496), chip_1475 }, /* Marvell 1475 (any vendor/model) */
 	{ PCI_VDEVICE(OCZ, 0x1021), chip_9485}, /* OCZ RevoDrive3 */
 	{ PCI_VDEVICE(OCZ, 0x1022), chip_9485}, /* OCZ RevoDrive3/zDriveR4 (exact model unknown) */
 	{ PCI_VDEVICE(OCZ, 0x1040), chip_9485}, /* OCZ RevoDrive3/zDriveR4 (exact model unknown) */

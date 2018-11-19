@@ -39,21 +39,24 @@ enum VANIR_REVISION_ID {
 };
 
 enum host_registers {
-	MVS_HST_CHIP_CONFIG	= 0x10104,	/* chip configuration */
+	MVS_HST_CHIP_CONFIG	= 0x2C104,	/* chip configuration */
+// adam: what is host? 
 };
 
 enum hw_registers {
+// adam: 14.5.6.1: sata common register, see core_hal.h
+
 	MVS_GBL_CTL		= 0x04,  /* global control */
 	MVS_GBL_INT_STAT	= 0x00,  /* global irq status */
 	MVS_GBL_PI		= 0x0C,  /* ports implemented bitmask */
 
 	MVS_PHY_CTL		= 0x40,  /* SOC PHY Control */
-	MVS_PORTS_IMP		= 0x9C,  /* SOC Port Implemented */
+	MVS_PORTS_IMP		= 0x20,  /* SOC Port Implemented */
 
-	MVS_GBL_PORT_TYPE	= 0xa0,  /* port type */
+	MVS_GBL_PORT_TYPE	= 0x24,  /* port type */
 
-	MVS_CTL			= 0x100, /* SAS/SATA port configuration */
-	MVS_PCS			= 0x104, /* SAS/SATA port control/status */
+	MVS_CTL			= 0x40, /* SAS/SATA port configuration */
+	MVS_PCS			= 0x44, /* SAS/SATA port control/status */
 	MVS_CMD_LIST_LO		= 0x108, /* cmd list addr */
 	MVS_CMD_LIST_HI		= 0x10C,
 	MVS_RX_FIS_LO		= 0x110, /* RX FIS list addr */
@@ -117,14 +120,16 @@ enum hw_registers {
 };
 
 enum pci_cfg_registers {
+// adam: 14.1.3.2: table 14-5 PCIE PF0 register
 	PCR_PHY_CTL		= 0x40,
 	PCR_PHY_CTL2		= 0x90,
 	PCR_DEV_CTRL		= 0x78,
-	PCR_LINK_STAT		= 0xF0,
+	PCR_LINK_STAT		= 0xD0,
 };
 
 /*  SAS/SATA Vendor Specific Port Registers */
 enum sas_sata_vsp_regs {
+// adam: table 14-24
 	VSR_PHY_STAT		= 0x00 * 4, /* Phy Interrupt Status */
 	VSR_PHY_MODE1		= 0x01 * 4, /* phy Interrupt Enable */
 	VSR_PHY_MODE2		= 0x02 * 4, /* Phy Configuration */
@@ -145,14 +150,18 @@ enum sas_sata_vsp_regs {
 };
 
 enum chip_register_bits {
-	PHY_MIN_SPP_PHYS_LINK_RATE_MASK = (0x7 << 8),
-	PHY_MAX_SPP_PHYS_LINK_RATE_MASK = (0x7 << 12),
+// adam: core_hal.h: common port serial control/status (R140h) bits
+// table 14-23
+	PHY_MIN_SPP_PHYS_LINK_RATE_MASK = (0xF << 8),
+	PHY_MAX_SPP_PHYS_LINK_RATE_MASK = (0xF << 12),
 	PHY_NEG_SPP_PHYS_LINK_RATE_MASK_OFFSET = (16),
 	PHY_NEG_SPP_PHYS_LINK_RATE_MASK =
-			(0x3 << PHY_NEG_SPP_PHYS_LINK_RATE_MASK_OFFSET),
+			(0xF << PHY_NEG_SPP_PHYS_LINK_RATE_MASK_OFFSET),
 };
 
 enum pci_interrupt_cause {
+// adam: SOC main interrupt cause (402D274), more likely
+// [or CPU main interrupt cause (402D234)? what is the difference? ]
 	/*  MAIN_IRQ_CAUSE (R10200) Bits*/
 	MVS_IRQ_COM_IN_I2O_IOP0        = (1 << 0),
 	MVS_IRQ_COM_IN_I2O_IOP1        = (1 << 1),
@@ -186,6 +195,8 @@ enum pci_interrupt_cause {
 };
 
 union reg_phy_cfg {
+// adam: 14-24: PHY configration: R08h.
+// alsol core_hal.h: VSR PHY Configuration (R08)
 	u32 v;
 	struct {
 		u32 phy_reset:1;
@@ -220,6 +231,7 @@ union reg_phy_cfg {
 	} u;
 };
 
+// adam: see 11.5.8: PRD data buffer pointer entry
 #define MAX_SG_ENTRY		255
 
 struct mvs_prd_imt {

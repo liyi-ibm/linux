@@ -384,6 +384,7 @@ static int mvs_94xx_init(struct mvs_info *mvi)
 
 	revision = mvi->pdev->revision;
 	mvs_show_pcie_usage(mvi);
+// adam: what is PCTL_PHY_DSBL
 	if (mvi->flags & MVF_FLAG_SOC) {
 		tmp = mr32(MVS_PHY_CTL);
 		tmp &= ~PCTL_PWR_OFF;

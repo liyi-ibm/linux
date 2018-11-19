@@ -382,8 +382,10 @@ static int mvs_14xx_init(struct mvs_info *mvi)
 	u32 tmp, cctl;
 	u8 revision;
 
+printk(KERN_INFO "ADAM: %s:%d: regs: 0x%X\n", __FILE__, __LINE__, regs);
 	revision = mvi->pdev->revision;
 	mvs_show_pcie_usage(mvi);
+// adam: what is PCTL_PHY_DSBL
 	if (mvi->flags & MVF_FLAG_SOC) {
 		tmp = mr32(MVS_PHY_CTL);
 		tmp &= ~PCTL_PWR_OFF;
@@ -394,11 +396,14 @@ static int mvs_14xx_init(struct mvs_info *mvi)
 	/* Init Chip */
 	/* make sure RST is set; HBA_RST /should/ have done that for us */
 	cctl = mr32(MVS_CTL) & 0xFFFF;
+// adam: CCTL_RST: see 94xx SATA port configuration R20100h
+// reset SATA port	
 	if (cctl & CCTL_RST)
 		cctl &= ~CCTL_RST;
 	else
 		mw32_f(MVS_CTL, cctl | CCTL_RST);
 
+// adam: what is MVS_PHY_CTL
 	if (mvi->flags & MVF_FLAG_SOC) {
 		tmp = mr32(MVS_PHY_CTL);
 		tmp &= ~PCTL_PWR_OFF;
@@ -413,6 +418,7 @@ static int mvs_14xx_init(struct mvs_info *mvi)
 	}
 
 	/* disable Multiplexing, enable phy implemented */
+// adam: SATA common registers: 4020020h	
 	mw32(MVS_PORTS_IMP, 0xFF);
 
 	if (revision == VANIR_A0_REV) {
@@ -435,11 +441,13 @@ static int mvs_14xx_init(struct mvs_info *mvi)
 	}
 
 	/* reset control */
+// adam: SATA port control status 
 	mw32(MVS_PCS, 0);		/* MVS_PCS */
 	mw32(MVS_STP_REG_SET_0, 0);
 	mw32(MVS_STP_REG_SET_1, 0);
 
 	/* init phys */
+// adam: mv_chips.h
 	mvs_phy_hacks(mvi);
 
 	/* disable non data frame retry */
@@ -585,7 +593,7 @@ static int mvs_14xx_init(struct mvs_info *mvi)
 
 static int mvs_14xx_ioremap(struct mvs_info *mvi)
 {
-	if (!mvs_ioremap(mvi, 4, -1)) {
+	if (!mvs_ioremap(mvi, 2, -1)) {
 		mvi->regs_ex = mvi->regs + 0x10200;
 		mvi->regs += 0x20000;
 		if (mvi->id == 1)
