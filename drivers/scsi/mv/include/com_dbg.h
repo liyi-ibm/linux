@@ -261,6 +261,5 @@ MV_BOOLEAN mvLogSetModuleFilter(MV_U8 moduleId, MV_U32 filterMask);
 MV_U32 mvLogGetModuleFilter(MV_U8 moduleId);
 void mvLogMsg(MV_U8 moduleId, MV_U32 type, char* format, ...);
 
-
 #endif /* COMMON_DEBUG_H */
 

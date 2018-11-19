@@ -224,20 +224,11 @@ static struct notifier_block mv_linux_notifier = {
 #endif /*#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,12))*/
 
 
-#if defined(SUPPORT_MV_SAS_CONTROLLER)
-static int mv_probe(platform_device_t *dev)
-#else
 static int mv_probe(struct pci_dev *dev, const struct pci_device_id *id)
-#endif
 {
 	unsigned int ret;
 	int err = 0;
-#if defined(SUPPORT_MV_SAS_CONTROLLER)
-	struct resource *res_irq = platform_get_resource(dev, IORESOURCE_IRQ, 0);
-	MV_PRINT("Marvell Storage Controller ID%d is found, using IRQ %d, driver version %s.\n",
-	       dev->id, res_irq->start, mv_version_linux);
-
-#else /*!SUPPORT_MV_SAS_CONTROLLER*/
+	
 	ret = PCIBIOS_SUCCESSFUL;
 #if defined(PRODUCTNAME_ATHENA) /*for Athena Z0/Z1, only function 0 works ok*/
 	if (dev->devfn != 0)
@@ -254,30 +245,7 @@ static int mv_probe(struct pci_dev *dev, const struct pci_device_id *id)
 	if (ret)
 		goto err_req_region;
 
-#if LINUX_VERSION_CODE <= KERNEL_VERSION(3,0,13)
-	if ( !pci_set_dma_mask(dev, DMA_64BIT_MASK) ) {
-#ifndef MV_VMK_ESX35
-		ret = pci_set_consistent_dma_mask(dev, DMA_64BIT_MASK);
-		if (ret) {
-			ret = pci_set_consistent_dma_mask(dev,
-							  DMA_32BIT_MASK);
-			if (ret)
-				goto err_dma_mask;
-		}
-#endif
-	} else {
-		ret = pci_set_dma_mask(dev, DMA_32BIT_MASK);
-		if (ret)
-			goto err_dma_mask;
-#ifndef MV_VMK_ESX35
-		ret = pci_set_consistent_dma_mask(dev, DMA_32BIT_MASK);
-		if (ret)
-			goto err_dma_mask;
-#endif
-	}
-#else
     if ( !pci_set_dma_mask(dev, DMA_BIT_MASK(64)) ) {
-#ifndef MV_VMK_ESX35
         ret = pci_set_consistent_dma_mask(dev, DMA_BIT_MASK(64));
         if (ret) {
             ret = pci_set_consistent_dma_mask(dev,
@@ -285,24 +253,19 @@ static int mv_probe(struct pci_dev *dev, const struct pci_device_id *id)
             if (ret)
                 goto err_dma_mask;
         }
-#endif
     } else {
         ret = pci_set_dma_mask(dev, DMA_BIT_MASK(32));
         if (ret)
             goto err_dma_mask;
-#ifndef MV_VMK_ESX35
         ret = pci_set_consistent_dma_mask(dev, DMA_BIT_MASK(32));
         if (ret)
             goto err_dma_mask;
-#endif
     }
-#endif
 
 	pci_set_master(dev);
 
 	MV_PRINT("Marvell Storage Controller is found, using IRQ %d, driver version %s.\n",
 	       dev->irq, mv_version_linux);
-#endif /*!SUPPORT_MV_SAS_CONTROLLER*/
 
 	MV_PRINT("Marvell Linux driver %s, driver version %s.\n",
 	      mv_driver_name, mv_version_linux);
@@ -322,14 +285,6 @@ static int mv_probe(struct pci_dev *dev, const struct pci_device_id *id)
 		ret = -ENODEV;
 		goto err_mod_start;
 	}
-#if defined(SUPPORT_MV_SAS_CONTROLLER)
-#else
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(2,6,12)) && !defined (MV_VMK_ESX35)
-		if (__mv_get_adapter_count() == 1) {
-			register_reboot_notifier(&mv_linux_notifier);
-		}
-#endif
-#endif
 	MV_DPRINT(("Finished mv_probe.\n"));
 
 	return 0;
@@ -339,12 +294,10 @@ err_mod_start:
 	mv_hba_release(dev);
 err_dma_mask:
 	err++;
-#if !defined(SUPPORT_MV_SAS_CONTROLLER)
 	pci_release_regions(dev);
 err_req_region:
 	err++;
 	pci_disable_device(dev);
-#endif
 
 	MV_PRINT("%s : error counter %d.\n", mv_product_name, err);
 	return ret;
@@ -808,25 +761,18 @@ static int mv_resume (struct pci_dev *pdev)
 }
 #endif
 
-#if !defined(SUPPORT_MV_SAS_CONTROLLER)
 static struct pci_driver mv_pci_driver = {
 	.name     = mv_driver_name,
 	.id_table = mv_pci_ids,
 	.probe    = mv_probe,
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3,8,0))
 	.remove   = mv_remove,
-#else
-	.remove   = __devexit_p(mv_remove),
-#endif
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,12))
 	.shutdown = mv_shutdown,
-#endif
 #ifdef CONFIG_PM
 	.resume = mv_resume,
 	.suspend = mv_suspend,
 #endif
 };
-#endif
+
 #ifdef USE_REQ_POOL
 
 int hba_req_cache_create(MV_PVOID hba_ext)
@@ -3430,52 +3376,11 @@ MODULE_PARM_DESC(mv_prot_guard, "host protection guard type");
 
 #endif
 
-#if defined(SUPPORT_MV_SAS_CONTROLLER)
-static struct platform_device_id mvs_soc_table[] = { //platform_device_id_t
-	{ "mvs-sp2", 0 },
-	{ }	/* terminate list */
-};
-
-static struct platform_driver mvs_soc_driver = { //platform_device_t
-	.driver		= {
-		.name	= mv_driver_name,
-		.owner	= THIS_MODULE,
-	},
-	.id_table	= mvs_soc_table,
-	.probe		= mv_probe,
-	.remove		= mv_remove,
-};
-#endif
 
 static int __init sas_hba_init(void)
 {
-#ifdef MV_VMK_ESX35
-	int rc=0;
-	if(!vmk_set_module_version(mv_version_linux))
-		return 0;
-	spin_lock_init(&io_request_lock);
-	mv_driver_template.driverLock = &io_request_lock;
-#endif
 	hba_house_keeper_init();
-#ifdef MV_VMK_ESX35
-	rc = pci_register_driver(&mv_pci_driver);
-	if(rc < 0) {
-		spin_lock_destroy(&io_request_lock);
-		return -ENODEV;
-	}
-	rc = scsi_register_module(MODULE_SCSI_HA,&mv_driver_template);
-	if(rc){
-		spin_lock_destroy(&io_request_lock);
-		pci_unregister_driver(&mv_pci_driver);
-	}
-	return 0;
-#else
-#if defined(SUPPORT_MV_SAS_CONTROLLER)
-    return platform_driver_register(&mvs_soc_driver);
-#else
-    return pci_register_driver(&mv_pci_driver);
-#endif
-#endif
+	return pci_register_driver(&mv_pci_driver);
 }
 
 static void __exit sas_hba_exit(void)
@@ -3495,11 +3400,11 @@ static void __exit sas_hba_exit(void)
 MODULE_AUTHOR ("Marvell Technolog Group Ltd.");
 MODULE_DESCRIPTION ("Marvell SAS hba driver");
 
-#if defined(SUPPORT_MV_SAS_CONTROLLER)
+//#if defined(SUPPORT_MV_SAS_CONTROLLER)
 MODULE_LICENSE("GPL");
-#else
-MODULE_LICENSE("proprietary");
-#endif
+//#else
+//MODULE_LICENSE("proprietary");
+//#endif
 MODULE_VERSION(mv_version_linux);
 MODULE_DEVICE_TABLE(pci, mv_pci_ids);
 module_init(sas_hba_init);

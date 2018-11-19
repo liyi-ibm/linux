@@ -109,6 +109,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 #endif
 
+#define MV_DEBUG 1
+
 /* For debug purpose only. */
 core_extension *gCore = NULL;
 #ifdef SUPPORT_PHY_POWER_MODE
@@ -130,7 +132,7 @@ extern MV_VOID core_clean_error_queue(core_extension *core);
 extern void core_clean_event_queue(core_extension *core);
 #endif
 #ifdef MV_DEBUG
-MV_BOOLEAN g_dump_register=0;
+MV_BOOLEAN g_dump_register=1;
 #endif
 MV_U32 Core_ModuleGetResourceQuota(enum Resource_Type type, MV_U16 max_io)
 {
@@ -816,6 +818,7 @@ MV_VOID Core_ModuleStart(MV_PVOID This)
 	/*
 	 * init this controller, especially global control
 	 */
+	printk("adam: controller_init()\n");
 	controller_init(core);
 	/*
 	 * init each module

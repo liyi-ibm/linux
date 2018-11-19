@@ -586,7 +586,7 @@ err_out:
 	for (i = 0; i < MAX_BASE_ADDRESS; i++) {
 		addr  = pci_resource_start(dev, i);
 		range = pci_resource_len(dev, i);
-
+		printk(KERN_INFO "adam: %s:%d, addr: 0x%p, range: 0x%p\n", __FILE__, __LINE__, addr, range);
 		if (pci_resource_flags(dev, i) & IORESOURCE_MEM){
 			addr_array[i] =(MV_PVOID) ioremap(addr, (unsigned long)range);
 		}
@@ -894,7 +894,7 @@ int mv_hba_init(struct pci_dev *dev, MV_U32 max_io)
 	hba_desc->max_io = max_io;
 	hba_desc->id     = __mv_get_adapter_count() - 1;
 	MV_DPRINT(("hba_desc->id=%d.\n", hba_desc->id));
-
+	printk("adam: mv_hba_init()\n");
 #if defined(SUPPORT_MV_SAS_CONTROLLER)
 	hba_desc->Vendor_Id = VENDOR_ID_EXT;
 	hba_desc->Device_Id = DEVICE_ID_1580;

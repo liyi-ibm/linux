@@ -454,6 +454,7 @@ struct mv_module_ops *mv_core_register_module(void)
 		#endif /* RAID_DRIVER */
 	};
 
+	printk("adam: register_module\n");
 	return &__core_mod_ops;
 }
 

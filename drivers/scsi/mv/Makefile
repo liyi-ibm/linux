@@ -18,6 +18,8 @@ ifeq ("x", "x$(KERNEL_SRC)")
 
 endif
 
+KERNEL_SRC=/home/adam/sdb6/mv14xx/linus_linux
+
 # use KERNEL_SRC if not called by our driver disk maker
 ifeq ("x", "x$(KERNEL_SOURCE_DIR)")
         KERNEL_SRC_DIR=$(KERNEL_SRC)
@@ -183,7 +185,7 @@ ifeq ($(SUPPORT_ATHENA),y)
 EXTRA_CFLAGS += -I$(src)/product/athena
 endif
 
-EXTRA_CFLAGS  +=  -D__MV_LINUX__ $(INCLUDE_DIR) -std=gnu99 #-D__MV_DEBUG__
+EXTRA_CFLAGS  +=  -D__MV_LINUX__ $(INCLUDE_DIR) -std=gnu99 -DMV_DEBUG
 
 ifeq ($(CONFIG_64BIT), y)
 EXTRA_CFLAGS  +=   -D_64_SYS_

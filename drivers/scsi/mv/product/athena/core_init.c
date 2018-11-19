@@ -75,6 +75,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "core_expander.h"
 #include "core_console.h"
 
+#define MV_DEBUG 1
+
 extern void core_handle_init_queue(core_extension *core, MV_BOOLEAN single);
 extern void core_handle_waiting_queue(core_extension *core);
 
@@ -1116,6 +1118,7 @@ MV_VOID athena_dump_common_reg(void *root_p)
 	MV_U32 i = 0;
     pl_root *root = (pl_root *)root_p;
     MV_LPVOID mmio = root->mmio_base;
+    printk("mmio: 0x%X\n", mmio);
     MV_DPRINT(("COMMON_PORT_IMPLEMENT(0x%X)=%08X.\n", COMMON_PORT_IMPLEMENT, MV_REG_READ_DWORD(mmio, COMMON_PORT_IMPLEMENT)));
     MV_DPRINT(("COMMON_PORT_TYPE(0x%X)=%08X.\n", COMMON_PORT_TYPE, MV_REG_READ_DWORD(mmio, COMMON_PORT_TYPE)));
     MV_DPRINT(("COMMON_FIS_ADDR (0x%X)=%08X.\n", COMMON_FIS_ADDR, MV_REG_READ_DWORD(mmio, COMMON_FIS_ADDR)));
@@ -1235,6 +1238,7 @@ MV_VOID athena_dump_port_config_reg_phy(void *root_p, void* phy_p)
     pl_root *root = (pl_root *)root_p;
     MV_LPVOID mmio = root->mmio_base;
     domain_phy *phy=(domain_phy *)phy_p;
+    printk("mmio: 0x%p\n", mmio);
     MV_U32 i=(root->base_phy_num +phy->asic_id);
         WRITE_PORT_CONFIG_ADDR(root, phy, CONFIG_LED_CONTROL);
         MV_DPRINT(("phy %d CONFIG_LED_CONTROL(0x%03X): 0x%08x\n", i,CONFIG_LED_CONTROL, READ_PORT_CONFIG_DATA(root, phy)));
@@ -1331,6 +1335,7 @@ MV_VOID athena_dump_port_config_reg(void *root_p)
     MV_LPVOID mmio = root->mmio_base;
     MV_U32 i;
     domain_phy *phy;
+    printk("mmio: 0x%p\n", mmio);
     for (i = 0; i < root->phy_num; i++) {
         phy=&root->phy[i];
         WRITE_PORT_CONFIG_ADDR(root, phy, CONFIG_LED_CONTROL);
@@ -1428,6 +1433,7 @@ MV_VOID athena_dump_phy_vsr_reg_phy(void *root_p, void* phy_p)
     pl_root *root = (pl_root *)root_p;
     MV_LPVOID mmio = root->mmio_base;
     domain_phy *phy=(domain_phy *)phy_p;
+    printk("mmio: 0x%p\n", mmio);
     MV_U32 i=(root->base_phy_num +phy->asic_id);
         WRITE_PORT_VSR_ADDR(root, phy,VSR_IRQ_STATUS);
         MV_DPRINT(("phy %d VSR_IRQ_STATUS(0x%03X): 0x%08x\n", i, VSR_IRQ_STATUS, READ_PORT_VSR_DATA(root, phy)));	
@@ -1490,6 +1496,7 @@ MV_VOID athena_dump_phy_vsr_reg(void *root_p)
     MV_LPVOID mmio = root->mmio_base;
     domain_phy *phy;
     MV_U32 i;
+    printk("mmio: 0x%p\n", mmio);
     for (i = 0; i < root->phy_num; i++) {
         phy=&root->phy[i];
         WRITE_PORT_VSR_ADDR(root, phy,VSR_IRQ_STATUS);
@@ -1552,6 +1559,8 @@ MV_VOID athena_dump_cmd_reg(void *root_p)
 {
     pl_root *root = (pl_root *)root_p;
     MV_LPVOID mmio = root->mmio_base;
+    
+    printk("mmio: 0x%p\n", mmio);
         /* command registor -- Monitor Data/Select */
     MV_REG_WRITE_DWORD(mmio, COMMON_CMD_ADDR, CMD_MONITOR_DATA_SELECT);
     MV_DPRINT(("CMD_MONITOR_DATA_SELECT(0x%X)=%08X.\n",  CMD_MONITOR_DATA_SELECT, MV_REG_READ_DWORD(mmio, COMMON_CMD_DATA)));
