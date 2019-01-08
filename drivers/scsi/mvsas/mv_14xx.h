@@ -44,79 +44,155 @@ enum host_registers {
 };
 
 enum hw_registers {
-// adam: 14.5.6.1: sata common register, see core_hal.h
+	/* SATA/SAS port common registers *
+	MVS_PORT_IMPLEMENT	= 0x20,  /* port implement register */
+	MVS_PORT_TYPE		= 0x24,  /* port type register */
+	MVS_FIS_ADDR		= 0x30, /* FIS rx buf addr */
+	MVS_FIS_ADDR_HI      = 0x34, /* FIS rx buf addr hi */^M
+^M
+        MVS_LST_ADDR         = 0x38, /* command list DMA addr -- External IO Context Base Address*/^M
+        MVS_LST_ADDR_HI      = 0x3C, /* command list DMA addr hi --  External IO Context Base Address hi*/^M
+        MVS_CONFIG           = 0x40, /* configuration register */^M
+        MVS_CONTROL          = 0x44, /* control register */^M
+        ^M
+        MVS_SATA_REG_SET0    = 0x50, /* SATA/STP Register Set 0 */^M
+        MVS_SATA_REG_SET1    = 0x54, /* SATA/STP Register Set 1 */^M
+        MVS_SATA_REG_SET2    = 0x58, /* SATA/STP Register Set 2 */^M
+        MVS_SATA_REG_SET3    = 0x5C, /* SATA/STP Register Set 3 */^M
+^M
+        MVS_SRS_IRQ_STAT0    = 0xD0, /* SRS interrupt status 0 */^M
+        MVS_SRS_IRQ_MASK0    = 0xD4, /* SRS intr enable/disable mask 0 */^M
+        MVS_SRS_IRQ_STAT0    = 0xD0, /* SRS interrupt status 0 */^M
+        MVS_SRS_IRQ_MASK0    = 0xD4, /* SRS intr enable/disable mask 0 */^M
+        MVS_SRS_IRQ_STAT1    = 0xD8, /* SRS interrupt status 1*/^M
+        MVS_SRS_IRQ_MASK1    = 0xDC, /* SRS intr enable/disable mask 1*/^M
+        MVS_SRS_IRQ_STAT2    = 0xE0, /* SRS interrupt status 2 */^M
+        MVS_SRS_IRQ_MASK2    = 0xE4, /* SRS intr enable/disable mask 2 */^M
+        MVS_SRS_IRQ_STAT3    = 0xE8, /* SRS interrupt status 3*/^M
+        MVS_SRS_IRQ_MASK3    = 0xEC, /* SRS intr enable/disable mask 3*/^M
+        ^M
+        MVS_NON_SPEC_NCQ_ERR0= 0x0110, /* Non Specific NCQ Error 0 */^M
+        MVS_NON_SPEC_NCQ_ERR1= 0x0114, /* Non Specific NCQ Error 1 */^M
+        MVS_NON_SPEC_NCQ_ERR2= 0x0118, /* Non Specific NCQ Error 2 */^M
+        MVS_NON_SPEC_NCQ_ERR3= 0x011C, /* Non Specific NCQ Error 3 */^M
+^M
+        MVS_CMD_ADDR         = 0x0130, /* Command Address Port */^M
+        MVS_CMD_DATA         = 0x0134, /* Command Data Port */^M
+^M
+        MVS_STP_CLR_AFFILIATION_DIS0   = 0x0150, /* STP Clear Affiliation Disable 0*/^M
+        MVS_STP_CLR_AFFILIATION_DIS1   = 0x0154, /* STP Clear Affiliation Disable 1*/^M
+        MVS_STP_CLR_AFFILIATION_DIS2   = 0x0158, /* STP Clear Affiliation Disable 2*/^M
+        MVS_STP_CLR_AFFILIATION_DIS3   = 0x015C, /* STP Clear Affiliation Disable 3*/^M
+^M
+        /* Port interrupt status/mask register set $i (0x180/0x184-0x1b8/0x1bc) */^M
+//      MVS_PORT_IRQ_STAT0   = 0x0180,^M
+//      MVS_PORT_IRQ_MASK0   = 0x0184,^M
+^M
+//      MVS_PORT_ALL_IRQ_STAT   = 0x01c0, /* All Port interrupt status */^M
+//      MVS_PORT_ALL_IRQ_MASK   = 0x01c4, /* All Port interrupt enable/disable mask */^M
+^M
+        /* port config address/data regsiter set $i (0x170/0x174- 0x208/0x20c) */^M
+        MVS_PORT_CONFIG_ADDR0  = 0x0170,^M
+        MVS_PORT_CONFIG_DATA0  = 0x0174,^M
+        MVS_PORT_ALL_CONFIG_ADDR  = 0x01B0, /* All Port config address */^M
+        MVS_PORT_ALL_CONFIG_DATA  = 0x01B4, /* All Port config data */^M
+^M
+^M
+        /*phy control/data register set $i (0x220/0x224- 0x258/0x25c) */^M
+^M
+        /*phy control/data register set $i (0x220/0x224- 0x258/0x25c) */^M
+        MVS_PORT_PHY_CONTROL0  = 0x0220,^M
+        MVS_PORT_PHY_CONTROL_DATA0  = 0x0224,^M
+^M
+        MVS_PORT_ALL_PHY_CONTROL = 0x0260, /* All phy Config/Control Address Port*/^M
+        MVS_PORT_ALL_PHY_CONTROL_DATA = 0x0264, /* All phy Config/Control Data Port */^M
+^M
+^M
+        /* port vendor specific address/data register set $i (0x250/0x254-0x268/0x26c) */^M
+//      MVS_PORT_VSR_ADDR0      = 0x0250,^M
+//      MVS_PORT_VSR_DATA0      = 0x0254,^M
+//      MVS_PORT_ALL_VSR_ADDR   = 0x0290, /* All port Vendor Specific Register addr */^M
+//      MVS_PORT_ALL_VSR_DATA   = 0x0294, /* All port Vendor Specific Register Data */^M
+^M
+        /* Athena new reqister */^M
+#ifdef SUPPORT_SECURITY_KEY_RECORDS^M
+        MVS_KEY_UNWRAP_ENG_CTRL  = 0x02A0, /* Key Unwrap Engine Control */^M
+        MVS_KEY_UNWRAP_ENG_STS  = 0x02A4, /* Key Unwrap Engine Status */^M
+        MVS_S_KEK0_INIT_VAL  = 0x02A8,           /* S_KEK 0 Initial Value Lower 32 Bits */^M
+        MVS_S_KEK0_INIT_VAL_HI  = 0x02AC, /* S_KEK 0 Initial Value Upper 32 Bits */^M
+        MVS_S_KEK1_INIT_VAL  = 0x02B0,       /* S_KEK 1 Initial Value Lower 32 Bits */^M
+        MVS_S_KEK1_INIT_VAL_HI  = 0x02B4, /* S_KEK 1 Initial Value Upper 32 Bits */^M
+        MVS_KEY_UNWRAP_ENG_IRQ_STAT  = 0x02B8, /* Key Unwrap Engine Interrupt Cause*/^M
+        MVS_KEY_UNWRAP_ENG_IRQ_MASK  = 0x02BC, /* Key Unwrap Engine Interrupt Enable */^M
+#endif^M
+        MVS_INTL_MEM_PARITY_ERR  = 0x02D0, /* Internal Memory Parity Error */^M
+        MVS_INTL_MEM_PARITY_ERR_EN  = 0x02D4, /* Internal Memory Parity Error Enable*/^M
+        MVS_DATA_PATH_PARITY_CTRL  = 0x02D8, /*Data Path Parity Control*/^M
+        MVS_DATA_PATH_PARITY_STS  = 0x02DC,   /* Data Path Parity Status*/^M
+        MVS_DATA_PATH_ERR_ADDR = 0x02E0,     /*Data Path Error Address Low*/^M
+        MVS_DATA_PATH_ERR_ADDR_HI  = 0x02E4, /* Data Path Error Address High*/^M
+#ifdef SUPPORT_SECURITY_KEY_RECORDS^M
+        MVS_GLOBAL_SECURITY_CONFIG = 0x0300, /* Global Security Configuration */^M
+        MVS_GLOBAL_ZERIOCATION_CTRL  = 0x0304, /* Global Zeriozation Control*/^M
+        MVS_R_KEK_VAULT_CTRL  = 0x0308,              /*R-KEK Vault Control*/^M
+        MVS_R_KEK_VAULT_STS  = 0x030C,               /*R-KEK Vault Status*/^M
+        MVS_SRS_IRQ_STAT0    = 0xD0, /* SRS interrupt status 0 */^M
+        MVS_SRS_IRQ_MASK0    = 0xD4, /* SRS intr enable/disable mask 0 */^M
+        MVS_SRS_IRQ_STAT1    = 0xD8, /* SRS interrupt status 1*/^M
+        MVS_SRS_IRQ_MASK1    = 0xDC, /* SRS intr enable/disable mask 1*/^M
+        MVS_SRS_IRQ_STAT2    = 0xE0, /* SRS interrupt status 2 */^M
+        MVS_SRS_IRQ_MASK2    = 0xE4, /* SRS intr enable/disable mask 2 */^M
+        MVS_SRS_IRQ_STAT3    = 0xE8, /* SRS interrupt status 3*/^M
+        MVS_SRS_IRQ_MASK3    = 0xEC, /* SRS intr enable/disable mask 3*/^M
+        ^M
+        MVS_NON_SPEC_NCQ_ERR0= 0x0110, /* Non Specific NCQ Error 0 */^M
+        MVS_NON_SPEC_NCQ_ERR1= 0x0114, /* Non Specific NCQ Error 1 */^M
+        MVS_NON_SPEC_NCQ_ERR2= 0x0118, /* Non Specific NCQ Error 2 */^M
+        MVS_NON_SPEC_NCQ_ERR3= 0x011C, /* Non Specific NCQ Error 3 */^M
+^M
+        MVS_CMD_ADDR         = 0x0130, /* Command Address Port */^M
+        MVS_CMD_DATA         = 0x0134, /* Command Data Port */^M
+^M
+        MVS_STP_CLR_AFFILIATION_DIS0   = 0x0150, /* STP Clear Affiliation Disable 0*/^M
+        MVS_STP_CLR_AFFILIATION_DIS1   = 0x0154, /* STP Clear Affiliation Disable 1*/^M
+        MVS_STP_CLR_AFFILIATION_DIS2   = 0x0158, /* STP Clear Affiliation Disable 2*/^M
+        MVS_STP_CLR_AFFILIATION_DIS3   = 0x015C, /* STP Clear Affiliation Disable 3*/^M
+^M
+        /* Port interrupt status/mask register set $i (0x180/0x184-0x1b8/0x1bc) */^M
+//      MVS_PORT_IRQ_STAT0   = 0x0180,^M
+//      MVS_PORT_IRQ_MASK0   = 0x0184,^M
+^M
+//      MVS_PORT_ALL_IRQ_STAT   = 0x01c0, /* All Port interrupt status */^M
+//      MVS_PORT_ALL_IRQ_MASK   = 0x01c4, /* All Port interrupt enable/disable mask */^M
+^M
+        /* port config address/data regsiter set $i (0x170/0x174- 0x208/0x20c) */^M
+        MVS_PORT_CONFIG_ADDR0  = 0x0170,^M
+        MVS_PORT_CONFIG_DATA0  = 0x0174,^M
+        MVS_PORT_ALL_CONFIG_ADDR  = 0x01B0, /* All Port config address */^M
+        MVS_PORT_ALL_CONFIG_DATA  = 0x01B4, /* All Port config data */^M
+^M
+^M
+        /*phy control/data register set $i (0x220/0x224- 0x258/0x25c) */^M
+        MVS_DELV_Q0_RD_PTR    = 0x418, /* delivery queue 0 read pointer */^M
+^M
+        MVS_CMPL_Q0_CONFIG    = 0x600, /* completion queue 0 configuration */^M
+        MVS_CMPL_Q0_ADDR      = 0x604, /* completion queue 0 base address */^M
+        MVS_CMPL_Q0_ADDR_HI   = 0x608, /* completion queue 0 base address hi */^M
+        MVS_CMPL_Q0_WR_PTR_SHADOW_ADDR       = 0x60C, /* completion queue 0 Write Pointer Shadow Address */^M
+        MVS_CMPL_Q0_WR_PTR_SHADOW_ADDR_HI   = 0x610, /* completion queue 0 Write Pointer Shadow Address hi*/^M
+        MVS_CMPL_Q0_WR_PTR    = 0x614, /* completion queue 0 write pointer */^M
+        MVS_CMPL_Q0_RD_PTR    = 0x618, /* completion queue 0 read pointer */^M
+^M
+        MVS_COAL0_CONFIG      = 0x700, /* interrupt coalescing 0 config */^M
+        MVS_COAL0_TIMEOUT     = 0x740, /* interrupt coalescing 0 time wait */^M
+        MVS_IRQ_STAT                 = 0x800, /* SAS/SATA Common Interrupt Cause  */^M
+        MVS_CMPLQ_IRQN_STAT   = 0x804, /* SAS/SATA CmplQ N Interrupt Cause */^M
+        MVS_CMPLQ_IRQN_MASK   = 0x808, /* SAS/SATA CmplQ N Interrupt Enable */^M
+        MVS_CMPLQ_IRQ0_STAT   = 0x810, /* SAS/SATA CmplQ 0 Interrupt Cause */^M
+        MVS_CMPLQ_IRQ0_MASK   = 0x840, /* SAS/SATA CmplQ 0 Interrupt Enable */^M
+        MVS_IRQ_ROUTING0   = 0x880, /* SAS/SATA Interrupt Routing 0 */^M
 
-	MVS_GBL_CTL		= 0x04,  /* global control */
-	MVS_GBL_INT_STAT	= 0x00,  /* global irq status */
-	MVS_GBL_PI		= 0x0C,  /* ports implemented bitmask */
 
-	MVS_PHY_CTL		= 0x40,  /* SOC PHY Control */
-	MVS_PORTS_IMP		= 0x20,  /* SOC Port Implemented */
-
-	MVS_GBL_PORT_TYPE	= 0x24,  /* port type */
-
-	MVS_CTL			= 0x40, /* SAS/SATA port configuration */
-	MVS_PCS			= 0x44, /* SAS/SATA port control/status */
-	MVS_CMD_LIST_LO		= 0x108, /* cmd list addr */
-	MVS_CMD_LIST_HI		= 0x10C,
-	MVS_RX_FIS_LO		= 0x110, /* RX FIS list addr */
-	MVS_RX_FIS_HI		= 0x114,
-	MVS_STP_REG_SET_0	= 0x118, /* STP/SATA Register Set Enable */
-	MVS_STP_REG_SET_1	= 0x11C,
-	MVS_TX_CFG		= 0x120, /* TX configuration */
-	MVS_TX_LO		= 0x124, /* TX (delivery) ring addr */
-	MVS_TX_HI		= 0x128,
-
-	MVS_TX_PROD_IDX		= 0x12C, /* TX producer pointer */
-	MVS_TX_CONS_IDX		= 0x130, /* TX consumer pointer (RO) */
-	MVS_RX_CFG		= 0x134, /* RX configuration */
-	MVS_RX_LO		= 0x138, /* RX (completion) ring addr */
-	MVS_RX_HI		= 0x13C,
-	MVS_RX_CONS_IDX		= 0x140, /* RX consumer pointer (RO) */
-
-	MVS_INT_COAL		= 0x148, /* Int coalescing config */
-	MVS_INT_COAL_TMOUT	= 0x14C, /* Int coalescing timeout */
-	MVS_INT_STAT		= 0x150, /* Central int status */
-	MVS_INT_MASK		= 0x154, /* Central int enable */
-	MVS_INT_STAT_SRS_0	= 0x158, /* SATA register set status */
-	MVS_INT_MASK_SRS_0	= 0x15C,
-	MVS_INT_STAT_SRS_1	= 0x160,
-	MVS_INT_MASK_SRS_1	= 0x164,
-	MVS_NON_NCQ_ERR_0	= 0x168, /* SRS Non-specific NCQ Error */
-	MVS_NON_NCQ_ERR_1	= 0x16C,
-	MVS_CMD_ADDR		= 0x170, /* Command register port (addr) */
-	MVS_CMD_DATA		= 0x174, /* Command register port (data) */
-	MVS_MEM_PARITY_ERR	= 0x178, /* Memory parity error */
-
-					 /* ports 1-3 follow after this */
-	MVS_P0_INT_STAT		= 0x180, /* port0 interrupt status */
-	MVS_P0_INT_MASK		= 0x184, /* port0 interrupt mask */
-					 /* ports 5-7 follow after this */
-	MVS_P4_INT_STAT		= 0x1A0, /* Port4 interrupt status */
-	MVS_P4_INT_MASK		= 0x1A4, /* Port4 interrupt enable mask */
-
-					 /* ports 1-3 follow after this */
-	MVS_P0_SER_CTLSTAT	= 0x1D0, /* port0 serial control/status */
-					 /* ports 5-7 follow after this */
-	MVS_P4_SER_CTLSTAT	= 0x1E0, /* port4 serial control/status */
-
-					 /* ports 1-3 follow after this */
-	MVS_P0_CFG_ADDR		= 0x200, /* port0 phy register address */
-	MVS_P0_CFG_DATA		= 0x204, /* port0 phy register data */
-					 /* ports 5-7 follow after this */
-	MVS_P4_CFG_ADDR		= 0x220, /* Port4 config address */
-	MVS_P4_CFG_DATA		= 0x224, /* Port4 config data */
-
-					 /* phys 1-3 follow after this */
-	MVS_P0_VSR_ADDR		= 0x250, /* phy0 VSR address */
-	MVS_P0_VSR_DATA		= 0x254, /* phy0 VSR data */
-					 /* phys 1-3 follow after this */
-					 /* multiplexing */
-	MVS_P4_VSR_ADDR 	= 0x250, /* phy4 VSR address */
-	MVS_P4_VSR_DATA 	= 0x254, /* phy4 VSR data */
-	MVS_PA_VSR_ADDR		= 0x290, /* All port VSR addr */
-	MVS_PA_VSR_PORT		= 0x294, /* All port VSR data */
-	MVS_COMMAND_ACTIVE	= 0x300,
 };
 
 enum pci_cfg_registers {

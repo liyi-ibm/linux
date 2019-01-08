@@ -604,6 +604,8 @@ enum mv_pci_regs {
 	MV_PCI_REG_WIN0_BASE = (MV_PCI_REG_ADDRESS_BASE + 0x424),
         MV_PCI_REG_WIN0_REMAP = (MV_PCI_REG_ADDRESS_BASE + 0x428),
 
+// adam: 14.5.1.1 PCIe Port Register Location on the Register Bus Descriptions
+// adam: RE4008000h (00000000h) PCIe Interrupt Cause
 	MV_PCI_REG_INT_CAUSE = (MV_PCI_REG_ADDRESS_BASE + 0x0),
 	MV_PCI_REG_INT_ENABLE = (MV_PCI_REG_ADDRESS_BASE + 0x4),
 };

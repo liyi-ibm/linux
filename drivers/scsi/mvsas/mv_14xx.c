@@ -330,6 +330,39 @@ static void mvs_14xx_phy_enable(struct mvs_info *mvi, u32 phy_id)
 	mvs_write_port_vsr_data(mvi, phy_id, tmp & 0xfd7fffff);
 }
 
+
+static inline void mvs_14xx_write_port_config_addr(u32 port, u32 addr)
+{
+//MV_REG_WRITE_DWORD(root->mmio_base, COMMON_PORT_CONFIG_ADDR0 + (phy->asic_id * 8), tmp)
+	mw32(COMMON_PORT_CONFIG_ADDR0 + (port * 8), addr);
+
+}
+
+static inline void mvs_14xx_write_port_config_data(u32 port, u32 val)
+{
+//MV_REG_WRITE_DWORD(root->mmio_base, COMMON_PORT_CONFIG_DATA0 + (phy->asic_id * 8), tmp)
+	mw32(COMMON_PORT_CONFIG_DATA0+ (port * 8), val);
+}
+
+static void mvs_14xx_set_dev_info(struct mvs_info *mvi, u32 phy_id)
+{
+	u32 tmp;
+
+	// adam: CONFIG_ID_FRAME5       = 0x114, /* Port device ID frame register 5, Phy Id*/
+	// adam: see 94xx doc. 14xx doc has no description
+        WRITE_PORT_CONFIG_ADDR(root, phy, CONFIG_ID_FRAME5);
+        reg = READ_PORT_CONFIG_DATA(root, phy);
+        reg &= 0xffff0000;
+        //reg |= (0x1800|phy->asic_id); //Add partial and slumber Capable bits
+        //adam: use the phy_id
+	reg |= (0x1800|phy_id); //Add partial and slumber Capable bits
+        WRITE_PORT_CONFIG_DATA(root, phy, reg);
+        
+	reg = (SAS_END_DEV << 4) + ((PORT_DEV_STP_INIT | PORT_DEV_SMP_INIT | PORT_DEV_SSP_INIT) << 8);
+        WRITE_PORT_CONFIG_ADDR(root, phy, CONFIG_ID_FRAME0);
+        WRITE_PORT_CONFIG_DATA(root, phy, reg);
+}
+
 static void mvs_14xx_sgpio_init(struct mvs_info *mvi)
 {
 	void __iomem *regs = mvi->regs_ex - 0x10200;
@@ -375,6 +408,19 @@ static void mvs_14xx_sgpio_init(struct mvs_info *mvi)
 
 }
 
+static inline void mvs_14xx_write_port_irq_mask(struct mvs_info *mvi,
+                                                u32 port, u32 val)
+{
+	WRITE_PORT_CONFIG_ADDR(root, i, CONFIG_PORT_IRQ_MASK);
+        WRITE_PORT_CONFIG_DATA(root, i, tmp);
+}
+
+static inline u32 mvs_14xx_read_port_irq_mask(struct mvs_info *mvi, u32 port)
+{
+        //return mvs_read_port(mvi, MVS_P0_INT_MASK,
+        //              MVS_P4_INT_MASK, port);
+}
+
 static int mvs_14xx_init(struct mvs_info *mvi)
 {
 	void __iomem *regs = mvi->regs;
@@ -382,158 +428,127 @@ static int mvs_14xx_init(struct mvs_info *mvi)
 	u32 tmp, cctl;
 	u8 revision;
 
-printk(KERN_INFO "ADAM: %s:%d: regs: 0x%X\n", __FILE__, __LINE__, regs);
+	printk(KERN_INFO "ADAM: %s:%d: regs: 0x%X\n", __FILE__, __LINE__, regs);
 	revision = mvi->pdev->revision;
 	mvs_show_pcie_usage(mvi);
-// adam: what is PCTL_PHY_DSBL
-	if (mvi->flags & MVF_FLAG_SOC) {
-		tmp = mr32(MVS_PHY_CTL);
-		tmp &= ~PCTL_PWR_OFF;
-		tmp |= PCTL_PHY_DSBL;
-		mw32(MVS_PHY_CTL, tmp);
-	}
 
 	/* Init Chip */
 	/* make sure RST is set; HBA_RST /should/ have done that for us */
+	// adam: MVS_CTL: sata port configuration 4020040h, mv driver refers to as COMMON_CONFIG	
 	cctl = mr32(MVS_CTL) & 0xFFFF;
-// adam: CCTL_RST: see 94xx SATA port configuration R20100h
-// reset SATA port	
+	// adam: CCTL_RST: see 94xx SATA port configuration R20040h
+	// adam: reset SATA port
 	if (cctl & CCTL_RST)
 		cctl &= ~CCTL_RST;
 	else
 		mw32_f(MVS_CTL, cctl | CCTL_RST);
-
-// adam: what is MVS_PHY_CTL
-	if (mvi->flags & MVF_FLAG_SOC) {
-		tmp = mr32(MVS_PHY_CTL);
-		tmp &= ~PCTL_PWR_OFF;
-		tmp |= PCTL_COM_ON;
-		tmp &= ~PCTL_PHY_DSBL;
-		tmp |= PCTL_LINK_RST;
-		mw32(MVS_PHY_CTL, tmp);
-		msleep(100);
-		tmp &= ~PCTL_LINK_RST;
-		mw32(MVS_PHY_CTL, tmp);
-		msleep(100);
-	}
-
-	/* disable Multiplexing, enable phy implemented */
-// adam: SATA common registers: 4020020h	
-	mw32(MVS_PORTS_IMP, 0xFF);
-
-	if (revision == VANIR_A0_REV) {
-		mw32(MVS_PA_VSR_ADDR, CMD_CMWK_OOB_DET);
-		mw32(MVS_PA_VSR_PORT, 0x00018080);
-	}
-	mw32(MVS_PA_VSR_ADDR, VSR_PHY_MODE2);
-	if (revision == VANIR_A0_REV || revision == VANIR_B0_REV)
-		/* set 6G/3G/1.5G, multiplexing, without SSC */
-		mw32(MVS_PA_VSR_PORT, 0x0084d4fe);
-	else
-		/* set 6G/3G/1.5G, multiplexing, with and without SSC */
-		mw32(MVS_PA_VSR_PORT, 0x0084fffe);
-
-	if (revision == VANIR_B0_REV) {
-		mw32(MVS_PA_VSR_ADDR, CMD_APP_MEM_CTL);
-		mw32(MVS_PA_VSR_PORT, 0x08001006);
-		mw32(MVS_PA_VSR_ADDR, CMD_HOST_RD_DATA);
-		mw32(MVS_PA_VSR_PORT, 0x0000705f);
-	}
+	// adam: Maybe able to shortent this to do in parallel
+	msleep(250);
 
 	/* reset control */
-// adam: SATA port control status 
+	// adam: SATA port control status, mv: COMMON_CONTROL 
 	mw32(MVS_PCS, 0);		/* MVS_PCS */
-	mw32(MVS_STP_REG_SET_0, 0);
-	mw32(MVS_STP_REG_SET_1, 0);
+	
+	/* disable Multiplexing, enable phy implemented */
+	// adam: SATA common registers: 4020020h	
+	//mw32(MVS_PORTS_IMP, 0xFF);
 
-	/* init phys */
-// adam: mv_chips.h
-	mvs_phy_hacks(mvi);
-
-	/* disable non data frame retry */
-	tmp = mvs_cr32(mvi, CMD_SAS_CTL1);
-	if ((revision == VANIR_A0_REV) ||
-		(revision == VANIR_B0_REV) ||
-		(revision == VANIR_C0_REV)) {
-		tmp &= ~0xffff;
-		tmp |= 0x007f;
-		mvs_cw32(mvi, CMD_SAS_CTL1, tmp);
-	}
-
-	/* set LED blink when IO*/
-	mw32(MVS_PA_VSR_ADDR, VSR_PHY_ACT_LED);
-	tmp = mr32(MVS_PA_VSR_PORT);
-	tmp &= 0xFFFF00FF;
-	tmp |= 0x00003300;
-	mw32(MVS_PA_VSR_PORT, tmp);
-
-	mw32(MVS_CMD_LIST_LO, mvi->slot_dma);
-	mw32(MVS_CMD_LIST_HI, (mvi->slot_dma >> 16) >> 16);
-
-	mw32(MVS_RX_FIS_LO, mvi->rx_fis_dma);
-	mw32(MVS_RX_FIS_HI, (mvi->rx_fis_dma >> 16) >> 16);
-
-	mw32(MVS_TX_CFG, MVS_CHIP_SLOT_SZ);
-	mw32(MVS_TX_LO, mvi->tx_dma);
-	mw32(MVS_TX_HI, (mvi->tx_dma >> 16) >> 16);
-
-	mw32(MVS_RX_CFG, MVS_RX_RING_SZ);
-	mw32(MVS_RX_LO, mvi->rx_dma);
-	mw32(MVS_RX_HI, (mvi->rx_dma >> 16) >> 16);
-
+	// adam: copied from mv
+#if defined(ATHENA_A0_WORKAROUND)
+    	mv32(0xC00C, 0x5555);
+#endif	
+	
 	for (i = 0; i < mvi->chip->n_phy; i++) {
 		mvs_14xx_phy_disable(mvi, i);
+		// adam: from mv driver	
+		mvs_14xx_set_dev_info(mvi, i);
 		/* set phy local SAS address */
+		// adam: this is the same
 		mvs_set_sas_addr(mvi, i, CONFIG_ID_FRAME3, CONFIG_ID_FRAME4,
 						cpu_to_le64(mvi->phy[i].dev_sas_addr));
 
-		mvs_14xx_enable_xmt(mvi, i);
-		mvs_14xx_config_reg_from_hba(mvi, i);
-		mvs_14xx_phy_enable(mvi, i);
+		//mvs_14xx_enable_xmt(mvi, i);
+		//mvs_14xx_config_reg_from_hba(mvi, i);
+		//mvs_14xx_phy_enable(mvi, i);
 
-		mvs_14xx_phy_reset(mvi, i, PHY_RST_HARD);
-		msleep(500);
-		mvs_14xx_detect_porttype(mvi, i);
+		//mvs_14xx_phy_reset(mvi, i, PHY_RST_HARD);
+		//msleep(500);
+		//mvs_14xx_detect_porttype(mvi, i);
 	}
 
-	if (mvi->flags & MVF_FLAG_SOC) {
-		/* set select registers */
-		writel(0x0E008000, regs + 0x000);
-		writel(0x59000008, regs + 0x004);
-		writel(0x20, regs + 0x008);
-		writel(0x20, regs + 0x00c);
-		writel(0x20, regs + 0x010);
-		writel(0x20, regs + 0x014);
-		writel(0x20, regs + 0x018);
-		writel(0x20, regs + 0x01c);
-	}
+	// adam: copied from mv driver
 	for (i = 0; i < mvi->chip->n_phy; i++) {
-		/* clear phy int status */
-		tmp = mvs_read_port_irq_stat(mvi, i);
-		tmp &= ~PHYEV_SIG_FIS;
-		mvs_write_port_irq_stat(mvi, i, tmp);
+		/* reset irq */
+		WRITE_PORT_CONFIG_ADDR(root, i, CONFIG_PORT_IRQ_STAT);
+                tmp= READ_PORT_CONFIG_DATA(root, i);
+                WRITE_PORT_CONFIG_DATA(root, i, tmp);
 
-		/* set phy int mask */
-		tmp = PHYEV_RDY_CH | PHYEV_BROAD_CH |
-			PHYEV_ID_DONE  | PHYEV_DCDR_ERR | PHYEV_CRC_ERR ;
-		mvs_write_port_irq_mask(mvi, i, tmp);
+		/* enable phy change interrupt and broadcast change */
+		tmp = IRQ_PHY_RDY_CHNG_MASK | IRQ_BRDCST_CHNG_RCVD_MASK |
+			IRQ_UNASSOC_FIS_RCVD_MASK | IRQ_SIG_FIS_RCVD_MASK |
+			IRQ_ASYNC_NTFCN_RCVD_MASK | IRQ_PHY_RDY_CHNG_1_TO_0;
 
-		msleep(100);
-		mvs_update_phyinfo(mvi, i, 1);
-	}
+                tmp |= IRQ_DMA_PEX_TO|IRQ_PRD_BC_ERR|IRQ_STP_SATA_PHY_DEC_ERR_MASK;
+                phy->phy_irq_mask = tmp;
+                WRITE_PORT_CONFIG_ADDR(root, i, CONFIG_PORT_IRQ_MASK);
+                WRITE_PORT_CONFIG_DATA(root, i, tmp);
+
+//adam: looks defined
+#ifdef SUPPORT_DIRECT_SATA_SSU
+		WRITE_PORT_VSR_ADDR(root, phy, VSR_IRQ_MASK);
+		tmp = READ_PORT_VSR_DATA(root, phy);
+		tmp |= VSR_SATA_SPIN_HOLD;
+		WRITE_PORT_VSR_DATA(root, phy, tmp);
+#endif
+	}	
+
+	//for (i = 0; i < mvi->chip->n_phy; i++) {
+	//	/* clear phy int status */
+	//	tmp = mvs_read_port_irq_stat(mvi, i);
+	//	tmp &= ~PHYEV_SIG_FIS;
+	//	mvs_write_port_irq_stat(mvi, i, tmp);
+
+	//	/* set phy int mask */
+	//	tmp = PHYEV_RDY_CH | PHYEV_BROAD_CH |
+	//		PHYEV_ID_DONE  | PHYEV_DCDR_ERR | PHYEV_CRC_ERR ;
+	//	mvs_write_port_irq_mask(mvi, i, tmp);
+
+	//	msleep(100);
+	//	mvs_update_phyinfo(mvi, i, 1);
+	//}
 
 	/* little endian for open address and command table, etc. */
-	cctl = mr32(MVS_CTL);
-	cctl |= CCTL_ENDIAN_CMD;
-	cctl &= ~CCTL_ENDIAN_OPEN;
-	cctl |= CCTL_ENDIAN_RSP;
-	mw32_f(MVS_CTL, cctl);
+	//cctl = mr32(MVS_CTL);
+	//cctl |= CCTL_ENDIAN_CMD;
+	//cctl &= ~CCTL_ENDIAN_OPEN;
+	//cctl |= CCTL_ENDIAN_RSP;
+	//mw32_f(MVS_CTL, cctl);
 
 	/* reset CMD queue */
-	tmp = mr32(MVS_PCS);
-	tmp |= PCS_CMD_RST;
-	tmp &= ~PCS_SELF_CLEAR;
-	mw32(MVS_PCS, tmp);
+	//tmp = mr32(MVS_PCS);
+	//tmp |= PCS_CMD_RST;
+	//tmp &= ~PCS_SELF_CLEAR;
+	//mw32(MVS_PCS, tmp);
+	
+	/* reset CMD queue */
+        tmp = MV_REG_READ_DWORD(mmio, COMMON_CONFIG);
+        tmp |= CONFIG_CMD_TBL_BE | CONFIG_DATA_BE;
+        tmp &= ~CONFIG_OPEN_ADDR_BE;
+        tmp |= CONFIG_RSPNS_FRAME_BE;
+        tmp |= CONFIG_STP_STOP_ON_ERR;
+        tmp |=(INTRFC_PCIEA<<CONFIG_IO_CNTXT_INTRFC_SLCT_SHIFT);
+        tmp |=(INTRFC_PCIEA<<CONFIG_RCVD_FIS_LIST_IFC_SLCT_SHIFT);
+        MV_REG_WRITE_DWORD(mmio, COMMON_CONFIG, tmp);
+
+	/* assign command list address */
+	MV_REG_WRITE_DWORD(mmio, COMMON_LST_ADDR, 0);
+	MV_REG_WRITE_DWORD(mmio, COMMON_LST_ADDR_HI, 0);
+
+	/* assign FIS address */
+	MV_REG_WRITE_DWORD(mmio, COMMON_FIS_ADDR, root->rx_fis_dma.parts.low);
+	MV_REG_WRITE_DWORD(mmio, COMMON_FIS_ADDR_HI, root->rx_fis_dma.parts.high);
+
+
 	/*
 	 * the max count is 0x1ff, while our max slot is 0x200,
 	 * it will make count 0.
@@ -593,14 +608,19 @@ printk(KERN_INFO "ADAM: %s:%d: regs: 0x%X\n", __FILE__, __LINE__, regs);
 
 static int mvs_14xx_ioremap(struct mvs_info *mvi)
 {
-	if (!mvs_ioremap(mvi, 2, -1)) {
+	// adam: core->mmio_base: MV_PRCI_BAR=0
+	if (!mvs_ioremap(mvi, 0, -1)) {
+		// adam: for 94xx: 10200h, main interrupt cause, double check for 14xx
 		mvi->regs_ex = mvi->regs + 0x10200;
+		// adam: MV_IO_CHIP_REGISTER_BASE 0x20000
 		mvi->regs += 0x20000;
 		if (mvi->id == 1)
+			// adam: MV_IO_CHIP_REGISTER_RANGE 0x04000
 			mvi->regs += 0x4000;
 		return 0;
 	}
 	return -1;
+
 }
 
 static void mvs_14xx_iounmap(struct mvs_info *mvi)

@@ -1980,6 +1980,7 @@ MV_VOID io_chip_init_registers(pl_root *root)
     //Can you please try the PI issue by setting register R2C00C to 0x5555? This change the memory access time in the GP register.
     MV_REG_WRITE_DWORD(root->mmio_base, 0xC00C, 0x5555);
 #else
+    printk("adam: phy= %p\n", phy)
     set_phy_rate(root, phy, 0);
 #endif
 
@@ -2132,6 +2133,7 @@ MV_VOID io_chip_init_registers(pl_root *root)
 	#endif
 
 #ifdef SUPPORT_DIRECT_SATA_SSU
+		printk("adam: SUPPORT_DIRECT_SATA_SSU")
 		WRITE_PORT_VSR_ADDR(root, phy, VSR_IRQ_MASK);
 		tmp = READ_PORT_VSR_DATA(root, phy);
 		tmp |= VSR_SATA_SPIN_HOLD;

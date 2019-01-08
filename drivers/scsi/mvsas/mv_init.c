@@ -569,7 +569,6 @@ static int mvs_pci_init(struct pci_dev *pdev, const struct pci_device_id *ent)
 		goto err_out_regions;
 	}
 
-printk(KERN_INFO "MINEDBG: %s:%d ent->driver_data: %d\n", __FILE__, __LINE__, ent->driver_data);
 	chip = &mvs_chips[ent->driver_data];
 	SHOST_TO_SAS_HA(shost) =
 		kcalloc(1, sizeof(struct sas_ha_struct), GFP_KERNEL);
@@ -579,7 +578,6 @@ printk(KERN_INFO "MINEDBG: %s:%d ent->driver_data: %d\n", __FILE__, __LINE__, en
 		goto err_out_regions;
 	}
 
-printk(KERN_INFO "MINEDBG: %s:%d\n", __FILE__, __LINE__);
 	rc = mvs_prep_sas_ha_init(shost, chip);
 	if (rc) {
 		scsi_host_put(shost);
@@ -587,69 +585,53 @@ printk(KERN_INFO "MINEDBG: %s:%d\n", __FILE__, __LINE__);
 		goto err_out_regions;
 	}
 
-printk(KERN_INFO "MINEDBG: %s:%d\n", __FILE__, __LINE__);
 	pci_set_drvdata(pdev, SHOST_TO_SAS_HA(shost));
 
-printk(KERN_INFO "MINEDBG: %s:%d\n", __FILE__, __LINE__);
 	do {
 		mvi = mvs_pci_alloc(pdev, ent, shost, nhost);
-printk(KERN_INFO "MINEDBG: %s:%d\n", __FILE__, __LINE__);
 		if (!mvi) {
-printk(KERN_INFO "MINEDBG: %s:%d\n", __FILE__, __LINE__);
 			rc = -ENOMEM;
 			goto err_out_regions;
 		}
 
-printk(KERN_INFO "MINEDBG: %s:%d\n", __FILE__, __LINE__);
 		memset(&mvi->hba_info_param, 0xFF,
 			sizeof(struct hba_info_page));
 
-printk(KERN_INFO "MINEDBG: %s:%d\n", __FILE__, __LINE__);
 		mvs_init_sas_add(mvi);
 
-printk(KERN_INFO "MINEDBG: %s:%d\n", __FILE__, __LINE__);
 		mvi->instance = nhost;
 		rc = MVS_CHIP_DISP->chip_init(mvi);
 		if (rc) {
-printk(KERN_INFO "MINEDBG: %s:%d\n", __FILE__, __LINE__);
 			mvs_free(mvi);
 			goto err_out_regions;
 		}
 		nhost++;
 printk(KERN_INFO "MINEDBG: %s:%d\n", __FILE__, __LINE__);
 	} while (nhost < chip->n_host);
-printk(KERN_INFO "MINEDBG: %s:%d\n", __FILE__, __LINE__);
 	mpi = (struct mvs_prv_info *)(SHOST_TO_SAS_HA(shost)->lldd_ha);
 #ifdef CONFIG_SCSI_MVSAS_TASKLET
 	tasklet_init(&(mpi->mv_tasklet), mvs_tasklet,
 		     (unsigned long)SHOST_TO_SAS_HA(shost));
 #endif
 
-printk(KERN_INFO "MINEDBG: %s:%d\n", __FILE__, __LINE__);
 	mvs_post_sas_ha_init(shost, chip);
 
-printk(KERN_INFO "MINEDBG: %s:%d\n", __FILE__, __LINE__);
 	rc = scsi_add_host(shost, &pdev->dev);
 	if (rc)
 		goto err_out_shost;
 
-printk(KERN_INFO "MINEDBG: %s:%d\n", __FILE__, __LINE__);
 	rc = sas_register_ha(SHOST_TO_SAS_HA(shost));
 	if (rc)
 		goto err_out_shost;
-printk(KERN_INFO "MINEDBG: %s:%d\n", __FILE__, __LINE__);
 	rc = request_irq(pdev->irq, irq_handler, IRQF_SHARED,
 		DRV_NAME, SHOST_TO_SAS_HA(shost));
 	if (rc)
 		goto err_not_sas;
 
-printk(KERN_INFO "MINEDBG: %s:%d\n", __FILE__, __LINE__);
 	MVS_CHIP_DISP->interrupt_enable(mvi);
 
-printk(KERN_INFO "MINEDBG: %s:%d\n", __FILE__, __LINE__);
 	scsi_scan_host(mvi->shost);
 
-printk(KERN_INFO "MINEDBG: %s:%d\n", __FILE__, __LINE__);
 	return 0;
 
 err_not_sas:

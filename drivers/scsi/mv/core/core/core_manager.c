@@ -842,7 +842,8 @@ MV_VOID Core_ModuleStart(MV_PVOID This)
 #ifdef ATHENA_MICRON_DETECT_WA	// for SSD cold boot detection issue.
 	for (i=core->chip_info->start_host; i<(core->chip_info->start_host + core->chip_info->n_host); i++){
 		core->roots[i].base_phy_num = i * core->chip_info->n_phy;
-		io_chip_init_registers_wa(&core->roots[i], 1);		
+		io_chip_init_registers_wa(&core->roots[i], 1);
+		printk("adam: io_chip_init_registers_wa");	
 	}
 	core_sleep_millisecond(core, 1000);
 #endif
@@ -856,6 +857,7 @@ MV_VOID Core_ModuleStart(MV_PVOID This)
 	for (i=core->chip_info->start_host; i<(core->chip_info->start_host + core->chip_info->n_host); i++){
 		core->roots[i].base_phy_num = i * core->chip_info->n_phy;
 		io_chip_init(&core->roots[i]);
+		printk("adam: io_chip_init");
 	}
 #endif
 	core->state = CORE_STATE_STARTING;
