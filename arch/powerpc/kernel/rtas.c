@@ -1050,6 +1050,9 @@ struct pseries_errorlog *get_pseries_errorlog(struct rtas_error_log *log,
 }
 
 /* We assume to be passed big endian arguments */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpragmas"
+#pragma GCC diagnostic ignored "-Wattribute-alias"
 asmlinkage int ppc_rtas(struct rtas_args __user *uargs)
 {
 	struct rtas_args args;
@@ -1136,6 +1139,7 @@ asmlinkage int ppc_rtas(struct rtas_args __user *uargs)
 
 	return 0;
 }
+#pragma GCC diagnostic pop
 
 /*
  * Call early during boot, before mem init, to retrieve the RTAS

@@ -185,6 +185,9 @@ static void subpage_mark_vma_nohuge(struct mm_struct *mm, unsigned long addr,
  * in a 2-bit field won't allow writes to a page that is otherwise
  * write-protected.
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpragmas"
+#pragma GCC diagnostic ignored "-Wattribute-alias"
 long sys_subpage_prot(unsigned long addr, unsigned long len, u32 __user *map)
 {
 	struct mm_struct *mm = current->mm;
@@ -264,3 +267,4 @@ long sys_subpage_prot(unsigned long addr, unsigned long len, u32 __user *map)
 	up_write(&mm->mmap_sem);
 	return err;
 }
+#pragma GCC diagnostic pop
